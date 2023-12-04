@@ -13,7 +13,7 @@ fn main() {
 // .664.598.."#;
 
     let mut matrix: Vec<Vec<char>> = vec![vec![]];
-    for (y, line) in input.lines().enumerate() {
+    for line in input.lines() {
         for (x, char) in line.chars().enumerate() {
             match matrix.get_mut(x) {
                 Some(col) => {
