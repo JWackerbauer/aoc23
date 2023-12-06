@@ -1,8 +1,8 @@
 use std::{collections::HashMap, ops::Range};
-use util::*;
+use lib::_5::*;
 
+#[cfg(test)]
 mod tests;
-mod util;
 
 fn main() {
     let input = std::fs::read_to_string("input/5.txt").unwrap();
@@ -23,9 +23,9 @@ pub fn filter_through(input: String) -> usize {
             end: start + seeds_raw.next().expect("no range"),
         })
     }
-    let maps: Vec<HashMap<Range<usize>, i64>> = input_blocks
+    let maps: Vec<Vec<(Range<usize>, i64)>> = input_blocks
         .map(|m| {
-            let mut map: HashMap<Range<usize>, i64> = HashMap::new();
+            let mut map: Vec<(Range<usize>, i64)> = vec![];
             for mut n in m.lines().filter_map(|l| {
                 let mut numbers = l.split(" ").filter_map(|n| n.parse::<usize>().ok());
                 if numbers.clone().count() != 3 {
@@ -52,9 +52,7 @@ pub fn filter_through(input: String) -> usize {
     for start in seed_ranges {
         let mut todo = vec![start];
         for stage in maps.as_slice() {
-            let mut found = handle_stage(&mut todo, stage);
-            todo.append(&mut found);
-            todo.dedup();
+            todo = handle_stage(&mut todo, stage);
             println!("---");
         }
         res_ranges.append(&mut todo);
@@ -64,7 +62,7 @@ pub fn filter_through(input: String) -> usize {
     res_ranges[0].start
 }
 
-fn handle_stage(todo: &mut Vec<Range<usize>>, map: &HashMap<Range<usize>, i64>) -> Vec<Range<usize>> {
+fn handle_stage(todo: &mut Vec<Range<usize>>, map: &Vec<(Range<usize>, i64)>) -> Vec<Range<usize>> {
     let mut found_ranges = vec![];
     println!("Todo: {todo:?}");
     println!("Stage: {map:?}");
@@ -90,6 +88,94 @@ fn handle_stage(todo: &mut Vec<Range<usize>>, map: &HashMap<Range<usize>, i64>) 
     found_ranges
 }
 
+fn map_range(
+    seed: &Range<usize>,
+    map: &Range<usize>,
+    offset: i64,
+) -> (Option<Range<usize>>, Vec<Range<usize>>) {
+    let mut mapped_range = None;
+    let mut new_ranges = vec![];
+    match seed.intersects(map) {
+        Overlap::IsContained => {
+            print!("contained = ");
+            let start = (seed.start as i64 + offset) as usize;
+            let end = (seed.end as i64 + offset) as usize;
+            mapped_range = Some(Range { start, end })
+        }
+        Overlap::PartialUpper => {
+            print!("partialupper = ");
+            mapped_range = Some(Range {
+                start: (seed.start as i64 + offset) as usize,
+                end: (map.end as i64 + offset) as usize,
+            });
+            new_ranges.push(Range {
+                start: map.end,
+                end: seed.end,
+            });
+        }
+        Overlap::PartialLower => {
+            print!("partiallower = ");
+            mapped_range = Some(Range {
+                start: (map.start as i64 + offset) as usize,
+                end: (seed.end as i64 + offset) as usize,
+            });
+            new_ranges.push(Range {
+                start: seed.start,
+                end: map.start,
+            });
+        }
+        Overlap::Contains => {
+            print!("contains = ");
+            mapped_range = Some(Range {
+                start: (map.start as i64 + offset) as usize,
+                end: (seed.end as i64 + offset) as usize,
+            });
+            new_ranges.push(Range {
+                start: map.end,
+                end: seed.end,
+            });
+            new_ranges.push(Range {
+                start: seed.start,
+                end: map.start,
+            });
+        }
+        Overlap::None => {
+            print!("none = ");
+        }
+    };
+    println!("{mapped_range:?}, new: {new_ranges:?}");
+    (mapped_range, new_ranges)
+}
 
-
-
+fn add_filter(map: &mut Vec<(Range<usize>, i64)>, range: &mut Range<usize>, offset: i64) {
+    for other_range in map.clone().iter().map(|i|&i.0) {
+        match range.intersects(other_range) {
+            Overlap::IsContained => {
+                panic!("range conflict: {range:?} is contained in {other_range:?}")
+            }
+            Overlap::None => {}
+            Overlap::PartialLower => {
+                range.end = other_range.start;
+                break;
+            }
+            Overlap::PartialUpper => {
+                range.start = other_range.end;
+                break;
+            }
+            Overlap::Contains => {
+                let lower = Range {
+                    start: range.start,
+                    end: other_range.start,
+                };
+                map.push((lower, offset));
+                let upper = Range {
+                    start: other_range.end,
+                    end: range.end,
+                };
+                map.push((upper, offset));
+                return;
+            }
+        };
+    }
+    map.push((range.to_owned(), offset));
+}

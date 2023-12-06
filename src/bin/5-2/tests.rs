@@ -22,11 +22,11 @@ fn test_intersects() {
 #[test]
 fn test_stage_handling() {
     let mut todo: Vec<Range<usize>> = vec![57..70];
-    let mut map: HashMap<Range<usize>, i64> =
+    let map: Vec<(Range<usize>, i64)> =
         vec![(0..7, 42), (11..53, -11), (7..11, 50), (53..61, -4)]
             .into_iter()
             .collect();
-        assert_eq!(handle_stage(&mut todo, &map), vec![53..57, 61..70]);
+    assert_eq!(handle_stage(&mut todo, &map), vec![53..57, 61..70]);
 }
 
 #[test]
