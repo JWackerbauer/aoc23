@@ -66,23 +66,24 @@ pub fn filter_through(input: String) -> usize {
 
 fn handle_stage(todo: &mut Vec<Range<usize>>, map: &HashMap<Range<usize>, i64>) -> Vec<Range<usize>> {
     let mut found_ranges = vec![];
+    println!("Todo: {todo:?}");
     println!("Stage: {map:?}");
     while let Some(range) = todo.pop() {
-        let mut mapped_ranges = vec![];
+        let mut mapped = None;
         for (_map_range, offset) in map {
             println!("Current: {range:?}, remaining: {todo:?}");
             println!("{_map_range:?} + ({offset})");
-            
             let mut res = map_range(&range, _map_range, *offset);
-            if let Some(mapped) = res.0 {
-                mapped_ranges.push(mapped);
+            mapped = res.0;
+            if mapped.is_some() {
                 todo.append(&mut res.1);
                 break;
             }
-        }
-        found_ranges.append(&mut mapped_ranges);
-        if found_ranges.len() < 1 {
-            found_ranges.push(range)
+        } 
+        if let Some(mapped) = mapped {
+            found_ranges.push(mapped);
+        } else {
+            found_ranges.push(range);
         }
     }
     println!("Done; found: {found_ranges:?}");
