@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashMap, u16, usize};
+use std::{cmp::Ordering, collections::HashMap, usize};
 
 #[cfg(test)]
 mod tests;

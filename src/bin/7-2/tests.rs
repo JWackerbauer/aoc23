@@ -8,7 +8,6 @@ KK677 28
 KTJJT 220
 QQQJA 483"#;
     println!("{:?}", rank_games(&mut parse_input(input.to_string())));
-    //assert_eq!(rank_games(&mut parse_input(input)), vec![])
     assert_eq!(get_winnings(input.to_string()), 5905);
 }
 
